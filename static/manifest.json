@@ -1,0 +1,21 @@
+{
+  "name": "Cash Flow Forecast",
+  "short_name": "CashFlow",
+  "description": "Understand your money. Plan with confidence.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FF8A65",
+  "theme_color": "#FFA726",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
