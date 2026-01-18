@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Cash Flow Forecast</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #FF8A65;
+            --secondary: #FFA726;
+            --bg: linear-gradient(135deg, #FFA726 0%, #FF8A65 100%);
+            --card-bg: rgba(255,255,255,0.95);
+            --text: #111;
+            --text-light: #555;
+            --success: #2e7d32;
+            --danger: #8b0000;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+        }
+        
+        /* Screens */
+        .screen {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .screen.active { display: flex; flex-direction: column; }
+        
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0 20px;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+        .card p {
+            color: var(--text-light);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        
+        /* Inputs */
+        .input-group {
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        textarea {
+            min-height: 200px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        /* Buttons */
+        .btn {
+            background: var(--bg);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { opacity: 0.5; }
+        .btn-secondary {
+            background: rgba(255,167,38,0.15);
+            color: var(--text);
+        }
+        .btn-sm {
+            padding: 10px 16px;
+            font-size: 14px;
+            width: auto;
+        }
+        
+        /* Logo Preview */
+        .logo-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 16px auto;
+            overflow: hidden;
+        }
+        .logo-preview img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        /* Color Swatches */
+        .color-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .color-swatch {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* Progress */
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            margin-bottom: 20px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        
+        /* Transaction Groups */
+        .group-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .group-name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .group-badge {
+            background: rgba(255,167,38,0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .group-stats {
+            font-size: 14px;
+            color: var(--text-light);
+        }
+        .group-amount {
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .group-amount.positive { color: var(--success); }
+        .group-amount.negative { color: var(--danger); }
+        
+        /* Transaction List */
+        .txn-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 12px 0;
+        }
+        .txn-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .txn-item:last-child { border-bottom: none; }
+        .txn-checkbox {
+            width: 20px;
+            height: 20px;
+        }
+        .txn-desc {
+            flex: 1;
+            font-size: 13px;
+        }
+        .txn-date {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        .txn-amount {
+            font-weight: 700;
+            font-size: 14px;
+            min-width: 80px;
+            text-align: right;
+        }
+        
+        /* Amount Pills */
+        .amount-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            min-width: 100px;
+        }
+        .amount-pill.credit {
+            background: rgba(46, 125, 50, 0.15);
+            color: var(--success);
+        }
+        .amount-pill.debit {
+            background: rgba(139, 0, 0, 0.15);
+            color: var(--danger);
+        }
+        
+        /* Frequency Selector */
+        .freq-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .freq-option {
+            padding: 10px 16px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .freq-option.selected {
+            border-color: var(--primary);
+            background: rgba(255,138,101,0.1);
+        }
+        
+        /* Category Selector */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .category-item {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .category-item.selected {
+            border-color: var(--primary);
+            background: rgba(255,138,101,0.1);
+        }
+        .category-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        .category-name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        /* Forecast Display */
+        .forecast-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .forecast-date {
+            font-weight: 600;
+        }
+        .forecast-day {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        
+        /* Trend Buttons */
+        .trend-btns {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .trend-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .trend-btn.selected { border-color: var(--primary); background: rgba(255,138,101,0.1); }
+        
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-label {
+            font-size: 12px;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .summary-value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .summary-date {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        
+        /* Status Badge */
+        .status-badge {
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+        .status-healthy { background: rgba(46,125,50,0.2); color: var(--success); }
+        .status-ok { background: rgba(255,167,38,0.3); color: #e65100; }
+        .status-tight { background: rgba(139,0,0,0.2); color: var(--danger); }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Welcome Screen */
+        .welcome-logo {
+            width: 120px;
+            height: 120px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        .welcome-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 8px;
+        }
+        .welcome-subtitle {
+            text-align: center;
+            font-size: 16px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen active">
+        <div class="welcome-logo">📊</div>
+        <h1 class="welcome-title">Cash Flow Forecast</h1>
+        <p class="welcome-subtitle">Understand your money. Plan with confidence.</p>
+        
+        <div style="flex: 1;"></div>
+        
+        <button class="btn" onclick="showScreen('company-setup')">Get Started</button>
+        <div style="height: 40px;"></div>
+    </div>
+    
+    <!-- Company Setup Screen -->
+    <div id="company-setup" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('welcome-screen')">← Back</button>
+            <h1>Company Setup</h1>
+        </div>
+        
+        <div class="progress-bar"><div class="progress-fill" style="width: 20%"></div></div>
+        
+        <div class="card">
+            <h2>Tell us about your business</h2>
+            <p>We'll use this to customize your experience.</p>
+            
+            <div class="input-group">
+                <label>Company Name</label>
+                <input type="text" id="company-name" placeholder="Acme Corporation">
+            </div>
+            
+            <div class="input-group">
+                <label>Website (optional)</label>
+                <input type="url" id="company-website" placeholder="https://acme.com">
+            </div>
+            
+            <button class="btn btn-secondary" onclick="fetchBranding()" id="fetch-branding-btn">
+                🎨 Auto-detect Logo & Colors
+            </button>
+            
+            <div id="branding-preview" style="display: none; margin-top: 20px;">
+                <div class="logo-preview">
+                    <img id="logo-img" src="">
+                </div>
+                <div class="color-row" style="justify-content: center;">
+                    <div class="color-swatch" id="primary-swatch"></div>
+                    <div class="color-swatch" id="secondary-swatch"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="flex: 1;"></div>
+        
+        <button class="btn" onclick="saveCompany()">Continue</button>
+    </div>
+    
+    <!-- Data Upload Screen -->
+    <div id="data-upload" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('company-setup')">← Back</button>
+            <h1>Import Data</h1>
+        </div>
+        
+        <div class="progress-bar"><div class="progress-fill" style="width: 40%"></div></div>
+        
+        <div class="card">
+            <h2>📋 Paste Your Bank Data</h2>
+            <p>Copy your last 90 days of transactions from online banking or QuickBooks and paste below. We'll automatically detect the format.</p>
+            
+            <div class="input-group">
+                <label>Transaction Data</label>
+                <textarea id="bank-data" placeholder="Paste your bank transactions here...
+
+Example format:
+JAN 13, 2026
+PAYROLL DIRECT DEP    5,234.00        
+OFFICE DEPOT          234.56
+DEPOSIT               1,500.00"></textarea>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>💰 Current Balance</h2>
+            <p>What's your current account balance?</p>
+            
+            <div class="input-group">
+                <label>Balance</label>
+                <input type="number" id="current-balance" placeholder="50000">
+            </div>
+        </div>
+        
+        <button class="btn" onclick="importData()">Analyze Transactions</button>
+    </div>
+    
+    <!-- Import Results Screen -->
+    <div id="import-results" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('data-upload')">← Back</button>
+            <h1>Data Imported</h1>
+        </div>
+        
+        <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
+        
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+            <h2>Successfully Imported!</h2>
+            <p id="import-summary">Loading...</p>
+        </div>
+        
+        <div class="card">
+            <h2>What we found:</h2>
+            <div id="groups-preview"></div>
+        </div>
+        
+        <div style="flex: 1;"></div>
+        
+        <button class="btn" onclick="startCategorization()">Review & Categorize</button>
+    </div>
+    
+    <!-- Categorization Screen -->
+    <div id="categorization" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('import-results')">← Back</button>
+            <h1>Categorize</h1>
+        </div>
+        
+        <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
+        
+        <div id="current-group-card"></div>
+        
+        <div id="group-transactions"></div>
+        
+        <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button class="btn btn-secondary" onclick="skipGroup()">Skip</button>
+            <button class="btn" onclick="confirmGroup()">Confirm ✓</button>
+        </div>
+    </div>
+    
+    <!-- Trend Analysis Screen -->
+    <div id="trends" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('categorization')">← Back</button>
+            <h1>Trends</h1>
+        </div>
+        
+        <div class="progress-bar"><div class="progress-fill" style="width: 80%"></div></div>
+        
+        <div class="card">
+            <h2>📈 Revenue Trend</h2>
+            <p id="revenue-trend-text">Loading...</p>
+            
+            <p style="font-weight: 600; margin-top: 12px;">What do you expect?</p>
+            <div class="trend-btns">
+                <div class="trend-btn" data-trend="revenue" data-value="increase" onclick="selectTrend(this)">📈</div>
+                <div class="trend-btn" data-trend="revenue" data-value="continue" onclick="selectTrend(this)">➡️</div>
+                <div class="trend-btn" data-trend="revenue" data-value="decrease" onclick="selectTrend(this)">📉</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📉 Expense Trend</h2>
+            <p id="expense-trend-text">Loading...</p>
+            
+            <p style="font-weight: 600; margin-top: 12px;">What do you expect?</p>
+            <div class="trend-btns">
+                <div class="trend-btn" data-trend="expenses" data-value="increase" onclick="selectTrend(this)">📈</div>
+                <div class="trend-btn" data-trend="expenses" data-value="continue" onclick="selectTrend(this)">➡️</div>
+                <div class="trend-btn" data-trend="expenses" data-value="decrease" onclick="selectTrend(this)">📉</div>
+            </div>
+        </div>
+        
+        <div style="flex: 1;"></div>
+        
+        <button class="btn" onclick="generateForecast()">Generate Forecast</button>
+    </div>
+    
+    <!-- Dashboard Screen -->
+    <div id="dashboard" class="screen">
+        <div class="header">
+            <h1 id="dashboard-title">Cash Flow</h1>
+        </div>
+        
+        <div id="status-badge" class="status-badge status-healthy">HEALTHY</div>
+        
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">CURRENT</div>
+                <div class="summary-value" id="current-bal">$0</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">30-DAY PROFIT</div>
+                <div class="summary-value" id="profit-30">$0</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">LOW POINT</div>
+                <div class="summary-value" id="low-point">$0</div>
+                <div class="summary-date" id="low-date"></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">HIGH POINT</div>
+                <div class="summary-value" id="high-point">$0</div>
+                <div class="summary-date" id="high-date"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Actions</h2>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn btn-secondary" onclick="showForecast()">📊 View Forecast</button>
+                <button class="btn btn-secondary" onclick="showScreen('categorization')">🏷️ Edit Categories</button>
+                <button class="btn btn-secondary" onclick="showScreen('trends')">📈 Adjust Trends</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Forecast Detail Screen -->
+    <div id="forecast-detail" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('dashboard')">← Done</button>
+            <h1>Forecast</h1>
+        </div>
+        
+        <div id="forecast-list"></div>
+    </div>
+    
+    <script>
+        // State
+        let state = {
+            companyId: null,
+            company: {},
+            groups: [],
+            currentGroupIndex: 0,
+            transactions: [],
+            forecast: null,
+            trendSettings: { revenue: 'continue', expenses: 'continue' }
+        };
+        
+        // Screen navigation
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        
+        // Fetch branding from website
+        async function fetchBranding() {
+            const website = document.getElementById('company-website').value;
+            if (!website) {
+                alert('Please enter a website first');
+                return;
+            }
+            
+            const btn = document.getElementById('fetch-branding-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Fetching...';
+            
+            try {
+                const resp = await fetch(`/api/company/temp/fetch-branding`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ website })
+                });
+                const data = await resp.json();
+                
+                if (data.logo_url) {
+                    document.getElementById('logo-img').src = data.logo_url;
+                    document.getElementById('primary-swatch').style.background = data.primary_color;
+                    document.getElementById('secondary-swatch').style.background = data.secondary_color;
+                    document.getElementById('branding-preview').style.display = 'block';
+                    
+                    state.company.logo_url = data.logo_url;
+                    state.company.primary_color = data.primary_color;
+                    state.company.secondary_color = data.secondary_color;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '🎨 Auto-detect Logo & Colors';
+        }
+        
+        // Save company
+        async function saveCompany() {
+            const name = document.getElementById('company-name').value || 'My Company';
+            
+            try {
+                const resp = await fetch('/api/company/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name,
+                        website: document.getElementById('company-website').value,
+                        ...state.company
+                    })
+                });
+                const data = await resp.json();
+                state.companyId = data.company_id;
+                showScreen('data-upload');
+            } catch (e) {
+                alert('Error creating company');
+            }
+        }
+        
+        // Import data
+        async function importData() {
+            const bankData = document.getElementById('bank-data').value;
+            const balance = parseFloat(document.getElementById('current-balance').value) || 0;
+            
+            if (!bankData.trim()) {
+                alert('Please paste your bank data');
+                return;
+            }
+            
+            try {
+                // Set balance
+                await fetch(`/api/company/${state.companyId}/set-balance`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ balance })
+                });
+                
+                // Import data
+                const resp = await fetch(`/api/company/${state.companyId}/import-data`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ data: bankData })
+                });
+                const result = await resp.json();
+                
+                document.getElementById('import-summary').textContent = 
+                    `${result.transactions_imported} transactions from ${result.date_range.start} to ${result.date_range.end}`;
+                
+                // Load groups
+                await loadGroups();
+                
+                // Show preview
+                let preview = '';
+                state.groups.slice(0, 5).forEach(g => {
+                    const amtClass = g.avg_amount > 0 ? 'positive' : 'negative';
+                    preview += `
+                        <div class="group-card">
+                            <div class="group-header">
+                                <span class="group-name">${g.name}</span>
+                                <span class="group-badge">${g.frequency}</span>
+                            </div>
+                            <div class="group-stats">${g.transaction_count} transactions</div>
+                            <div class="group-amount ${amtClass}">$${Math.abs(g.avg_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}/avg</div>
+                        </div>
+                    `;
+                });
+                if (state.groups.length > 5) {
+                    preview += `<p style="text-align:center;color:#666;">...and ${state.groups.length - 5} more groups</p>`;
+                }
+                document.getElementById('groups-preview').innerHTML = preview;
+                
+                showScreen('import-results');
+            } catch (e) {
+                alert('Error importing data: ' + e.message);
+            }
+        }
+        
+        // Load groups
+        async function loadGroups() {
+            const resp = await fetch(`/api/company/${state.companyId}/groups`);
+            const data = await resp.json();
+            state.groups = data.groups;
+            state.categories = data.categories;
+            state.frequencies = data.frequencies;
+        }
+        
+        // Start categorization
+        function startCategorization() {
+            state.currentGroupIndex = 0;
+            showCurrentGroup();
+            showScreen('categorization');
+        }
+        
+        // Show current group for categorization
+        async function showCurrentGroup() {
+            if (state.currentGroupIndex >= state.groups.length) {
+                // All done, go to trends
+                showScreen('trends');
+                loadTrends();
+                return;
+            }
+            
+            const group = state.groups[state.currentGroupIndex];
+            
+            // Fetch transactions
+            const resp = await fetch(`/api/company/${state.companyId}/group/${group.id}`);
+            const data = await resp.json();
+            
+            const amtClass = group.avg_amount > 0 ? 'positive' : 'negative';
+            
+            document.getElementById('current-group-card').innerHTML = `
+                <div class="card">
+                    <div class="group-header">
+                        <span class="group-name">${group.name}</span>
+                        <span class="group-amount ${amtClass}">$${Math.abs(group.avg_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}/avg</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Name this group</label>
+                        <input type="text" id="group-name-input" value="${group.name}" placeholder="e.g., Weekly Payroll">
+                    </div>
+                    
+                    <label style="font-weight:600;font-size:14px;margin-bottom:8px;display:block;">Category</label>
+                    <div class="category-grid">
+                        ${state.categories.map(c => `
+                            <div class="category-item ${c.id === group.category_id ? 'selected' : ''}" 
+                                 data-category="${c.id}" onclick="selectCategory(this)">
+                                <div class="category-icon">${c.icon}</div>
+                                <div class="category-name">${c.name}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <label style="font-weight:600;font-size:14px;margin-bottom:8px;display:block;">Frequency</label>
+                    <div class="freq-options">
+                        ${state.frequencies.map(f => `
+                            <div class="freq-option ${f.id === group.frequency ? 'selected' : ''}"
+                                 data-freq="${f.id}" onclick="selectFrequency(this)">${f.name}</div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // Show transactions
+            let txnHtml = '<div class="card"><h2>Transactions in this group</h2><div class="txn-list">';
+            txnHtml += `<div class="txn-item"><input type="checkbox" class="txn-checkbox" id="select-all" onchange="toggleAll(this)"><span style="font-weight:600;">Select All</span></div>`;
+            
+            data.transactions.forEach(t => {
+                const amtClass = t.amount > 0 ? 'credit' : 'debit';
+                txnHtml += `
+                    <div class="txn-item">
+                        <input type="checkbox" class="txn-checkbox" data-txn-id="${t.id}">
+                        <div class="txn-desc">
+                            ${t.description}
+                            <div class="txn-date">${t.date}</div>
+                        </div>
+                        <span class="amount-pill ${amtClass}">$${Math.abs(t.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                    </div>
+                `;
+            });
+            txnHtml += '</div>';
+            txnHtml += `<button class="btn btn-secondary btn-sm" style="margin-top:12px;" onclick="moveSelected()">Move Selected →</button>`;
+            txnHtml += '</div>';
+            
+            document.getElementById('group-transactions').innerHTML = txnHtml;
+        }
+        
+        function selectCategory(el) {
+            document.querySelectorAll('.category-item').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+        
+        function selectFrequency(el) {
+            document.querySelectorAll('.freq-option').forEach(f => f.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+        
+        function toggleAll(checkbox) {
+            document.querySelectorAll('.txn-checkbox[data-txn-id]').forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+        }
+        
+        async function confirmGroup() {
+            const group = state.groups[state.currentGroupIndex];
+            const name = document.getElementById('group-name-input').value;
+            const category = document.querySelector('.category-item.selected')?.dataset.category;
+            const frequency = document.querySelector('.freq-option.selected')?.dataset.freq;
+            
+            await fetch(`/api/company/${state.companyId}/group/${group.id}/update`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name, category_id: category, frequency, confirmed: true })
+            });
+            
+            state.currentGroupIndex++;
+            showCurrentGroup();
+        }
+        
+        function skipGroup() {
+            state.currentGroupIndex++;
+            showCurrentGroup();
+        }
+        
+        async function moveSelected() {
+            const selected = Array.from(document.querySelectorAll('.txn-checkbox[data-txn-id]:checked'))
+                .map(cb => parseInt(cb.dataset.txnId));
+            
+            if (selected.length === 0) {
+                alert('Select transactions to move');
+                return;
+            }
+            
+            const newGroupName = prompt('Enter new group name (or leave blank to move to Unassigned):');
+            
+            await fetch(`/api/company/${state.companyId}/move-transactions`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    transaction_ids: selected,
+                    new_group_name: newGroupName || null,
+                    target_group_id: newGroupName ? null : 'unassigned'
+                })
+            });
+            
+            await loadGroups();
+            showCurrentGroup();
+        }
+        
+        // Trends
+        async function loadTrends() {
+            const resp = await fetch(`/api/company/${state.companyId}/trends`);
+            const data = await resp.json();
+            
+            const revText = data.trends.revenue === 'increasing' ? '📈 Revenue is trending UP' :
+                           data.trends.revenue === 'decreasing' ? '📉 Revenue is trending DOWN' :
+                           '➡️ Revenue is stable';
+            
+            const expText = data.trends.expenses === 'increasing' ? '📈 Expenses are trending UP' :
+                           data.trends.expenses === 'decreasing' ? '📉 Expenses are trending DOWN' :
+                           '➡️ Expenses are stable';
+            
+            document.getElementById('revenue-trend-text').textContent = revText;
+            document.getElementById('expense-trend-text').textContent = expText;
+        }
+        
+        function selectTrend(el) {
+            const trend = el.dataset.trend;
+            const value = el.dataset.value;
+            
+            document.querySelectorAll(`.trend-btn[data-trend="${trend}"]`).forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+            
+            state.trendSettings[trend] = value;
+        }
+        
+        async function generateForecast() {
+            // Save trend settings
+            await fetch(`/api/company/${state.companyId}/trend-sentiment`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(state.trendSettings)
+            });
+            
+            // Get forecast
+            const resp = await fetch(`/api/company/${state.companyId}/forecast?days=30`);
+            state.forecast = await resp.json();
+            
+            updateDashboard();
+            showScreen('dashboard');
+        }
+        
+        function updateDashboard() {
+            if (!state.forecast || !state.forecast.summary) return;
+            
+            const summary = state.forecast.summary;
+            
+            document.getElementById('current-bal').textContent = '$' + summary.current_balance.toLocaleString();
+            document.getElementById('low-point').textContent = '$' + summary.low_point.balance.toLocaleString();
+            document.getElementById('low-date').textContent = summary.low_point.date;
+            document.getElementById('high-point').textContent = '$' + summary.high_point.balance.toLocaleString();
+            document.getElementById('high-date').textContent = summary.high_point.date;
+            
+            // Calculate profit
+            const profit = summary.high_point.balance - summary.low_point.balance;
+            document.getElementById('profit-30').textContent = '$' + profit.toLocaleString();
+            
+            // Status
+            const statusEl = document.getElementById('status-badge');
+            if (summary.low_point.balance > 50000) {
+                statusEl.className = 'status-badge status-healthy';
+                statusEl.textContent = 'HEALTHY';
+            } else if (summary.low_point.balance > 10000) {
+                statusEl.className = 'status-badge status-ok';
+                statusEl.textContent = 'OK';
+            } else {
+                statusEl.className = 'status-badge status-tight';
+                statusEl.textContent = 'TIGHT';
+            }
+        }
+        
+        function showForecast() {
+            if (!state.forecast) return;
+            
+            let html = '';
+            state.forecast.forecast.forEach(row => {
+                const balClass = row.balance > 50000 ? 'positive' : row.balance > 10000 ? '' : 'negative';
+                html += `
+                    <div class="forecast-row">
+                        <div>
+                            <div class="forecast-date">${row.date}</div>
+                            <div class="forecast-day">${row.day_name}</div>
+                        </div>
+                        <span class="amount-pill ${row.credits > row.debits ? 'credit' : 'debit'}">
+                            $${row.balance.toLocaleString()}
+                        </span>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('forecast-list').innerHTML = html;
+            showScreen('forecast-detail');
+        }
+    </script>
+</body>
+</html>
